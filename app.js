@@ -1,37 +1,15 @@
 // ==== Constants & State ====
 let rosterData = [];
 let attendanceData = {}; // Format: { "YYYY-MM-DD": { memberId: true/false } }
-let apiPassword = sessionStorage.getItem('sk2042_api_password');
 let saveQueue = Promise.resolve();
 
 async function apiRequest(url, options = {}) {
-  for (let attempt = 0; attempt < 2; attempt++) {
-    if (!apiPassword) {
-      apiPassword = prompt('Enter the attendance dashboard password:');
-      if (!apiPassword) throw new Error('A dashboard password is required.');
-      sessionStorage.setItem('sk2042_api_password', apiPassword);
-    }
-
-    const response = await fetch(url, {
-      ...options,
-      headers: {
-        ...options.headers,
-        Authorization: `Bearer ${apiPassword}`
-      }
-    });
-
-    if (response.status === 401) {
-      apiPassword = null;
-      sessionStorage.removeItem('sk2042_api_password');
-      continue;
-    }
-    if (!response.ok) {
-      const result = await response.json().catch(() => ({}));
-      throw new Error(result.error || `Request failed (${response.status}).`);
-    }
-    return response.json();
+  const response = await fetch(url, options);
+  if (!response.ok) {
+    const result = await response.json().catch(() => ({}));
+    throw new Error(result.error || `Request failed (${response.status}).`);
   }
-  throw new Error('The password was not accepted.');
+  return response.json();
 }
 
 function reportSaveError(error) {

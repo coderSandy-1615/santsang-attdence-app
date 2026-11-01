@@ -1,17 +1,12 @@
-const crypto = require('node:crypto');
 require('dotenv').config();
 const express = require('express');
 const { MongoClient } = require('mongodb');
 const { maleRoster, femaleRoster } = require('./roster');
 
-const { MONGODB_URI, MONGODB_DB = 'attendance_dashboard', APP_PASSWORD } = process.env;
+const { MONGODB_URI, MONGODB_DB = 'satsang_attendance' } = process.env;
 
 if (!MONGODB_URI) {
   throw new Error('MONGODB_URI must be configured.');
-}
-
-if (!APP_PASSWORD || APP_PASSWORD.length < 16) {
-  throw new Error('APP_PASSWORD must be configured with at least 16 characters.');
 }
 
 const client = new MongoClient(MONGODB_URI);
@@ -22,27 +17,10 @@ const initialRoster = [
   ...femaleRoster.map(member => ({ ...member, category: 'महिला' }))
 ];
 
-function isAuthorized(req) {
-  const authorization = req.get('authorization') || '';
-  if (!authorization.startsWith('Bearer ')) return false;
-
-  const token = authorization.slice(7);
-  const supplied = Buffer.from(token);
-  const expected = Buffer.from(APP_PASSWORD);
-  return supplied.length === expected.length && crypto.timingSafeEqual(supplied, expected);
-}
-
-function requireAuthorization(req, res, next) {
-  if (!isAuthorized(req)) {
-    return res.status(401).json({ error: 'Authentication required.' });
-  }
-  next();
-}
-
 app.disable('x-powered-by');
 app.use(express.json({ limit: '2mb' }));
 
-app.get('/api/data', requireAuthorization, async (req, res, next) => {
+app.get('/api/data', async (req, res, next) => {
   try {
     const db = client.db(MONGODB_DB);
     const membersCollection = db.collection('members');
@@ -75,7 +53,7 @@ app.get('/api/data', requireAuthorization, async (req, res, next) => {
   }
 });
 
-app.put('/api/data', requireAuthorization, async (req, res, next) => {
+app.put('/api/data', async (req, res, next) => {
   const { roster, attendance } = req.body || {};
   if (
     !Array.isArray(roster)

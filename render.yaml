@@ -9,6 +9,4 @@ services:
       - key: MONGODB_URI
         sync: false
       - key: MONGODB_DB
-        value: attendance_dashboard
-      - key: APP_PASSWORD
-        sync: false
+        value: satsang_attendance

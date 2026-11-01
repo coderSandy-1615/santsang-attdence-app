@@ -126,7 +126,7 @@ async function initData() {
       body: JSON.stringify({ roster: rosterData, attendance: attendanceData })
     });
   }
-  clearLegacyData();
+  
 }
 
 function saveRoster() {
